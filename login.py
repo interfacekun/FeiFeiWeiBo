@@ -105,7 +105,7 @@ class Userlogin:
 
 if __name__ == '__main__':
     login = Userlogin()
-    login.userlogin("15907883005", "WOAICMP", None)
+    login.userlogin("", "", None)
     #login.getFollows()
     #print(login.getHomePage())
     login.getFans()
