@@ -3,13 +3,18 @@ import requests
 import base64  
 import re  
 import urllib
-#import urllib.parse
 import rsa  
 import json  
 import binascii  
 from bs4 import BeautifulSoup
   
 class Userlogin:  
+    def __init__(self):
+
+        self.session = None
+        self.homePage = None
+        self.homePageText = None
+
     def userlogin(self,username,password,pagecount):  
         session = requests.Session()  
         url_prelogin = 'http://login.sina.com.cn/sso/prelogin.php?entry=weibo&callback=sinaSSOController.preloginCallBack&su=&rsakt=mod&client=ssologin.js(v1.4.5)&_=1364875106625'  
@@ -57,16 +62,50 @@ class Userlogin:
                             'rsakv' : rsakv,  
                             }  
         resp = session.post(url_login, data=postdata)  
-        # print resp.headers 
-        print(resp.content)
-        login_url = re.findall(r'http://weibo.*&retcode=0',resp.text)  
-        #  
+        self.session = session
+        # # print resp.headers 
+        #print(resp.content)
+        login_url = re.findall(r'http://weibo.*&retcode=0',resp.text)   
         print(login_url)
-        respo = session.get(login_url[0])  
+        respo = session.get(login_url[0]) 
+
         uid = re.findall('"uniqueid":"(\d+)",',respo.text)[0]  
         url = "http://weibo.com/u/"+uid  
         respo = session.get(url)
-        print(respo.content)
+        #print(respo.content)
+        self.homePage = respo.content
+        self.homePageText = respo.text
 
-login = Userlogin()
-login.userlogin("", "", None)
+    def GET(self, url):
+        return self.session.get(url)
+
+    def POST(self, url, data):
+        return self.session.post(url, data)
+
+    def getFollows(self):
+        #print(self.homePage)
+        followUrl = re.findall(r'(\\/\\/weibo\.com\\/\d+\\/follow\?from=page_\d+&wvr=\d+&mod=headfollow#place)', self.homePage)[0]
+        followUrl = "https:" + followUrl.replace('\\', "")
+        respo = self.GET(followUrl)
+        followPage = respo.content
+        followList = re.findall(r'uid=\d+&nick=(.+?)\\', followPage)
+        return followList
+
+    def getFans(self):
+        fansUrl = re.findall(r'(\\/\\/weibo\.com\\/\d+\\/fans\?from=\d+&wvr=\d+&mod=headfans&current=fans#place)', self.homePage)[0]
+        fansUrl = "https:" + fansUrl.replace('\\', "")
+        respo = self.GET(fansUrl)
+        fansPage = respo.content
+        fansList = re.findall(r'uid=\d+&nick=(.+?)\\', fansPage)
+        print fansList
+        return None
+
+    def getHomePage(self):
+        return self.homePage
+
+if __name__ == '__main__':
+    login = Userlogin()
+    login.userlogin("15907883005", "WOAICMP", None)
+    #login.getFollows()
+    #print(login.getHomePage())
+    login.getFans()
